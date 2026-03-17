@@ -90,59 +90,59 @@ def generar_reporte_inventario(db: Session = Depends(get_db)):
         return {"error": str(e)}
     
 
-def tarea_quincenal_inventario():
-    print("⏳ Iniciando análisis de inventario automático...")
+# def tarea_quincenal_inventario():
+#     print("⏳ Iniciando análisis de inventario automático...")
     
-    # 1. Abrimos nuestra propia conexión a la BD manualmente
-    db = SessionLocal()
-    try:
-        productos = db.query(models.Producto).filter(models.Producto.status == True).all()
+#     # 1. Abrimos nuestra propia conexión a la BD manualmente
+#     db = SessionLocal()
+#     try:
+#         productos = db.query(models.Producto).filter(models.Producto.status == True).all()
         
-        if not productos:
-            print("❌ No hay productos para analizar.")
-            return
+#         if not productos:
+#             print("❌ No hay productos para analizar.")
+#             return
 
-        datos_inventario = "Inventario actual:\n"
-        for p in productos:
-            datos_inventario += f"- {p.nombre}: Quedan {p.stock} unidades.\n"
+#         datos_inventario = "Inventario actual:\n"
+#         for p in productos:
+#             datos_inventario += f"- {p.nombre}: Quedan {p.stock} unidades.\n"
 
-        prompt = f"""
-        Eres un asesor de negocios. Tu cliente es Ángel, dueño de una tiendita.
-        Inventario: {datos_inventario}
-        Redacta un mensaje corto para WhatsApp diciéndole qué pedir con urgencia (menos de 10) y qué NO pedir (más de 20). Usa emojis.
-        """
+#         prompt = f"""
+#         Eres un asesor de negocios. Tu cliente es Ángel, dueño de una tiendita.
+#         Inventario: {datos_inventario}
+#         Redacta un mensaje corto para WhatsApp diciéndole qué pedir con urgencia (menos de 10) y qué NO pedir (más de 20). Usa emojis.
+#         """
 
-        respuesta = cliente_ia.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=prompt
-        )
+#         respuesta = cliente_ia.models.generate_content(
+#             model='gemini-2.5-flash',
+#             contents=prompt
+#         )
         
-        print("\n✅ ¡REPORTE GENERADO CON ÉXITO!\n")
-        print(respuesta.text)
-        print("\n--------------------------------------------------\n")
+#         print("\n✅ ¡REPORTE GENERADO CON ÉXITO!\n")
+#         print(respuesta.text)
+#         print("\n--------------------------------------------------\n")
         
-        # AQUÍ EN EL FUTURO AGREGAREMOS EL CÓDIGO PARA ENVIAR EL WHATSAPP
-        # ... tu código anterior que generaba la respuesta de Gemini ...
+#         # AQUÍ EN EL FUTURO AGREGAREMOS EL CÓDIGO PARA ENVIAR EL WHATSAPP
+#         # ... tu código anterior que generaba la respuesta de Gemini ...
         
-        texto_whatsapp = respuesta.text
+#         texto_whatsapp = respuesta.text
         
-        # 5. Conectamos con Twilio
-        cliente_twilio = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
+#         # 5. Conectamos con Twilio
+#         cliente_twilio = Client(os.getenv("TWILIO_ACCOUNT_SID"), os.getenv("TWILIO_AUTH_TOKEN"))
         
-        # 6. Disparamos el mensaje
-        mensaje = cliente_twilio.messages.create(
-            from_=os.getenv("TWILIO_PHONE_NUMBER"),
-            body=texto_whatsapp,
-            to=os.getenv("MI_NUMERO_CELULAR")
-        )
+#         # 6. Disparamos el mensaje
+#         mensaje = cliente_twilio.messages.create(
+#             from_=os.getenv("TWILIO_PHONE_NUMBER"),
+#             body=texto_whatsapp,
+#             to=os.getenv("MI_NUMERO_CELULAR")
+#         )
         
-        print(f"\n✅ ¡WHATSAPP ENVIADO CON ÉXITO! ID: {mensaje.sid}\n")
+#         print(f"\n✅ ¡WHATSAPP ENVIADO CON ÉXITO! ID: {mensaje.sid}\n")
         
-    except Exception as e:
-        print(f"❌ Error en la tarea automática: {str(e)}")
-    finally:
-        # 2. Es VITAL cerrar la conexión al terminar para no saturar Postgres
-        db.close()
+#     except Exception as e:
+#         print(f"❌ Error en la tarea automática: {str(e)}")
+#     finally:
+#         # 2. Es VITAL cerrar la conexión al terminar para no saturar Postgres
+#         db.close()
 
 
 
