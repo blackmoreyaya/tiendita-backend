@@ -6,8 +6,8 @@ from database import SessionLocal
 import os
 from dotenv import load_dotenv
 from google import genai
-from apscheduler.schedulers.background import BackgroundScheduler
 from twilio.rest import Client
+# from apscheduler.schedulers.background import BackgroundScheduler
 
 
 # Esto carga las variables de tu archivo .env
@@ -145,12 +145,63 @@ def tarea_quincenal_inventario():
         db.close()
 
 
+
+
+# Dependiendo de si usas router o app, pon @router.get o @app.get
+@router.get("/reporte-bolis")
+def enviar_reporte_arfily(db: Session = Depends(get_db)):
+    
+    # 1. Abrimos nuestra propia conexión a la BD manualmente
+    db = SessionLocal()
+    try:
+        productos = db.query(models.Producto).filter(models.Producto.status == True).all()
+        
+        if not productos:
+            print("❌ No hay productos para analizar.")
+            return
+
+        datos_inventario = "Inventario actual:\n"
+        for p in productos:
+            datos_inventario += f"- {p.nombre}: Quedan {p.stock} unidades.\n"
+
+        prompt = f"""
+        Eres un asesor de negocios. Tu cliente es Arfily, dueño de una tiendita.
+        Inventario: {datos_inventario}
+        Redacta un mensaje corto para WhatsApp diciéndole qué pedir con urgencia (menos de 10) y qué NO pedir (más de 20). Usa emojis.
+        """
+
+        respuesta = cliente_ia.models.generate_content(
+            model='gemini-2.5-flash',
+            contents=prompt
+        )
+        
+        print("\n✅ ¡REPORTE GENERADO CON ÉXITO!\n")
+        print(respuesta.text)
+        print("\n--------------------------------------------------\n")
+
+    
+        print("¡Reporte enviado exitosamente a Arfily!")
+    
+            # Devolvemos un mensaje de éxito para saber que funcionó
+        return {
+            "status": "éxito", 
+            "mensaje": "El reporte de inventario de bolis ha sido enviado por WhatsApp a Arfily. 🧊✨"
+        }
+
+    except Exception as e:
+        print(f"❌ Error en la tarea automática: {str(e)}")
+    finally:
+        # 2. Es VITAL cerrar la conexión al terminar para no saturar Postgres
+        db.close()
+
+
+
 # Configuramos el temporizador
-scheduler = BackgroundScheduler()
+# scheduler = BackgroundScheduler()
 
 # Para hacer pruebas, le diremos que se ejecute cada 15 SEGUNDOS (en vez de 15 días)
 # scheduler.add_job(tarea_quincenal_inventario, 'interval', seconds=15)
-scheduler.add_job(tarea_quincenal_inventario, 'interval', days=15)
+# scheduler.add_job(tarea_quincenal_inventario, 'interval', days=15)
 
 # Arrancamos el reloj
-scheduler.start()
+# scheduler.start()
