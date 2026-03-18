@@ -174,7 +174,7 @@ def enviar_reporte_arfily(db: Session = Depends(get_db)):
         1. NO inventes sabores, productos ni números que no estén en la lista de arriba. 
         2. Menciona ÚNICAMENTE los bolis que aparecen en el inventario proporcionado.
         
-        Basado SOLO en esa lista, redacta un mensaje corto y cariñoso para WhatsApp. Si en la lista hay bolis con menos de 10 unidades, dile que los prepare con urgencia. Si hay con más de 20, dile que de esos hay de sobra. Si solo hay un sabor en la lista, habla solo de ese. Usa emojis.
+        Basado SOLO en esa lista, redacta un mensaje corto y cariñoso para WhatsApp. Si en la lista hay bolis con menos de 5 unidades, dile que los prepare con urgencia. Si hay con más de 15, dile que de esos hay de sobra. Si solo hay un sabor en la lista, habla solo de ese. Usa emojis.
         """
 
         respuesta = cliente_ia.models.generate_content(
