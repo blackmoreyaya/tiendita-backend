@@ -191,7 +191,7 @@ def enviar_reporte_arfily(db: Session = Depends(get_db)):
         phone_id = os.getenv("META_PHONE_ID")
         
         # OJO: Pon tu número con código de país (ej. 52 para México seguido de tus 10 dígitos)
-        numero_destino = "527224213955" 
+        numero_destino = "527223942299" 
 
         url_meta = f"https://graph.facebook.com/v18.0/{phone_id}/messages"
         
