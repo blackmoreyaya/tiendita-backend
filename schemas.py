@@ -1,5 +1,6 @@
 from pydantic import BaseModel
 from datetime import datetime
+from typing import Optional
 
 # Esquema base con los datos comunes
 class ProductoBase(BaseModel):
@@ -38,3 +39,8 @@ class VentaResponse(VentaBase):
 
     class Config:
         from_attributes = True  # Esto permite que Pydantic lea el modelo de SQLAlchemy
+
+class ProductoUpdate(BaseModel):
+    nombre: Optional[str] = None
+    precio: Optional[float] = None
+    stock: Optional[int] = None

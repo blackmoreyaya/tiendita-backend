@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 import models, schemas
 from database import SessionLocal
 import os
+import requests
 from dotenv import load_dotenv
 from google import genai
-from twilio.rest import Client
+# from twilio.rest import Client
 # from apscheduler.schedulers.background import BackgroundScheduler
 
 
@@ -150,24 +151,30 @@ def generar_reporte_inventario(db: Session = Depends(get_db)):
 # Dependiendo de si usas router o app, pon @router.get o @app.get
 @router.get("/reporte-bolis")
 def enviar_reporte_arfily(db: Session = Depends(get_db)):
-    
-    # 1. Abrimos nuestra propia conexión a la BD manualmente
-    db = SessionLocal()
     try:
+        # FastAPI ya maneja la conexión a la BD gracias al Depends(get_db)
         productos = db.query(models.Producto).filter(models.Producto.status == True).all()
         
         if not productos:
             print("❌ No hay productos para analizar.")
-            return
+            return {"mensaje": "No hay bolis registrados en el inventario."}
 
-        datos_inventario = "Inventario actual:\n"
+        datos_inventario = "Inventario actual de bolis:\n"
         for p in productos:
             datos_inventario += f"- {p.nombre}: Quedan {p.stock} unidades.\n"
 
+        # Le damos el contexto exacto a la IA para que el mensaje sea muy natural
         prompt = f"""
-        Eres un asesor de negocios. Tu cliente es Arfily, dueño de una tiendita.
-        Inventario: {datos_inventario}
-        Redacta un mensaje corto para WhatsApp diciéndole qué pedir con urgencia (menos de 10) y qué NO pedir (más de 20). Usa emojis.
+        Eres un asistente amigable. Tu jefa es Arfily, quien tiene un negocio de venta de bolis (congeladas/hielitos).
+        
+        Aquí tienes el inventario REAL y ÚNICO de hoy:
+        {datos_inventario}
+        
+        REGLAS ESTRICTAS: 
+        1. NO inventes sabores, productos ni números que no estén en la lista de arriba. 
+        2. Menciona ÚNICAMENTE los bolis que aparecen en el inventario proporcionado.
+        
+        Basado SOLO en esa lista, redacta un mensaje corto y cariñoso para WhatsApp. Si en la lista hay bolis con menos de 10 unidades, dile que los prepare con urgencia. Si hay con más de 20, dile que de esos hay de sobra. Si solo hay un sabor en la lista, habla solo de ese. Usa emojis.
         """
 
         respuesta = cliente_ia.models.generate_content(
@@ -179,20 +186,44 @@ def enviar_reporte_arfily(db: Session = Depends(get_db)):
         print(respuesta.text)
         print("\n--------------------------------------------------\n")
 
-    
-        print("¡Reporte enviado exitosamente a Arfily!")
-    
-            # Devolvemos un mensaje de éxito para saber que funcionó
+        # --- INICIO DE ENVÍO POR META WHATSAPP ---
+        meta_token = os.getenv("META_TOKEN")
+        phone_id = os.getenv("META_PHONE_ID")
+        
+        # OJO: Pon tu número con código de país (ej. 52 para México seguido de tus 10 dígitos)
+        numero_destino = "527224213955" 
+
+        url_meta = f"https://graph.facebook.com/v18.0/{phone_id}/messages"
+        
+        headers = {
+            "Authorization": f"Bearer {meta_token}",
+            "Content-Type": "application/json"
+        }
+        
+        payload = {
+            "messaging_product": "whatsapp",
+            "to": numero_destino,
+            "type": "text",
+            "text": {
+                "body": respuesta.text # Aquí metemos la respuesta que armó Gemini
+            }
+        }
+
+        # Disparamos el mensaje
+        respuesta_meta = requests.post(url_meta, headers=headers, json=payload)
+        
+        # Imprimimos en consola para asegurarnos de que Meta lo aceptó
+        print("Respuesta de Meta:", respuesta_meta.json())
+        # --- FIN DE ENVÍO POR META ---
+
         return {
             "status": "éxito", 
             "mensaje": "El reporte de inventario de bolis ha sido enviado por WhatsApp a Arfily. 🧊✨"
         }
 
     except Exception as e:
-        print(f"❌ Error en la tarea automática: {str(e)}")
-    finally:
-        # 2. Es VITAL cerrar la conexión al terminar para no saturar Postgres
-        db.close()
+        print(f"❌ Error al enviar el reporte: {str(e)}")
+        return {"error": str(e)}
 
 
 

@@ -54,6 +54,24 @@ def actualizar_producto(producto_id: str, producto_actualizado: schemas.Producto
     db.refresh(producto)
     return producto
 
+
+@router.patch("/{producto_id}", response_model=schemas.ProductoResponse)
+def actualizar_producto(producto_id: str, producto_actualizado: schemas.ProductoUpdate, db: Session = Depends(get_db)):
+    producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
+    if producto is None:
+        raise HTTPException(status_code=404, detail="Producto no encontrado")
+    
+    # La magia: exclude_unset=True solo toma los campos que el frontend envió
+    datos_nuevos = producto_actualizado.model_dump(exclude_unset=True)
+    
+    for key, value in datos_nuevos.items():
+        setattr(producto, key, value)
+    
+    db.commit()
+    db.refresh(producto)
+    return producto
+
+
 @router.delete("/{producto_id}")
 def eliminar_producto(producto_id: str, db: Session = Depends(get_db)):
     producto = db.query(models.Producto).filter(models.Producto.id == producto_id).first()
