@@ -24,6 +24,7 @@ class Venta(Base):
     cantidad = Column(Integer, default=0)
     fecha_venta = Column(DateTime(timezone=True), server_default=func.now())
     status = Column(Boolean, default=True)
+    es_muestra = Column(Boolean, default=False)
     # El equivalente a los timestamps() de Laravel
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -27,6 +27,7 @@ class VentaBase(BaseModel):
     producto_id: str
     cantidad: int = 0
     status: bool = True
+    es_muestra: bool = False
 
 class VentaCreate(VentaBase):
     pass

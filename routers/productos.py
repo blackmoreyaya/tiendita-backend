@@ -31,7 +31,7 @@ def crear_producto(producto: schemas.ProductoCreate, db: Session = Depends(get_d
 
 @router.get("/", response_model=list[schemas.ProductoResponse])
 def leer_productos(skip: int = 0, limit: int = 100, db: Session = Depends(get_db)):
-    productos = db.query(models.Producto).offset(skip).limit(limit).all()
+    productos = db.query(models.Producto).order_by(models.Producto.nombre.asc()).offset(skip).limit(limit).all()
     return productos
 
 @router.get("/{producto_id}", response_model=schemas.ProductoResponse)
